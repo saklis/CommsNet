@@ -5,7 +5,8 @@ Net Standard 2.0 communication framework. WCF replacement. Uses MessagePack for 
 **Table of Contents**
 - [CommsNet - Network abstraction library](#commsnet---network-abstraction-library)
   - [1. Overview](#1-overview)
-  - [2. CommsNet architecture](#2-commsnet-architecture)
+  - [2. Installation](#2-installation)
+  - [3. CommsNet architecture](#3-commsnet-architecture)
     - [A. DuplexConnection](#a-duplexconnection)
       - [I. Creating DuplexConnection](#i-creating-duplexconnection)
       - [II. Sending data](#ii-sending-data)
@@ -27,7 +28,7 @@ Net Standard 2.0 communication framework. WCF replacement. Uses MessagePack for 
       - [II. ServiceManager as a server](#ii-servicemanager-as-a-server)
       - [III. ServiceManager as a client](#iii-servicemanager-as-a-client)
       - [IV. Log](#iv-log)
-  - [3. ServiceManager usage](#3-servicemanager-usage)
+  - [4. ServiceManager usage](#4-servicemanager-usage)
     - [A. Preparing shared library](#a-preparing-shared-library)
     - [B. Method declaration](#b-method-declaration)
     - [C. Data containers](#c-data-containers)
@@ -35,6 +36,7 @@ Net Standard 2.0 communication framework. WCF replacement. Uses MessagePack for 
     - [E. Client-side instance and remote execution](#e-client-side-instance-and-remote-execution)
     - [F. Interface-less implementation](#f-interface-less-implementation)
     - [G. Callbacks](#g-callbacks)
+  - [5. Attributions](#5-attributions)
 
 ## 1. Overview
 
@@ -50,9 +52,12 @@ CommsNet provides following functions:
 
 CommsNet is writtem in NET Standard 2.0 and is compatible with .NET Framework 4.7.2 and newer, .NET Standard 2.0 and newer, .NET Core 2.0 and newer as well as .NET 5 and newer.
 
-Library can be added to the project using NuGet package: (link incoming)
+## 2. Installation
+With Visual Studio NuGet Package Manager: **PM> NuGet\Install-Package CommsNet**
 
-## 2. CommsNet architecture
+or download library from: <a href="https://www.nuget.org/packages/CommsNet/">https://www.nuget.org/packages/CommsNet/</a>
+
+## 3. CommsNet architecture
 
 CommsNet consist of 3 classes that are crucial to using the library. Here’s the description of those 3 classes in rising complexity order. This chapter provides description of public API of each class.
 
@@ -371,7 +376,7 @@ public delegate void LogDelegate(string message);
 
 ServiceManager internally subscribes to Log events of all underlying DuplexConnection's Log events.
 
-## 3. ServiceManager usage
+## 4. ServiceManager usage
 
 While using DuplexConnection and ConnectionManager classes is rather straightforward, ServiceManager requires more explanation. First of all, it’s an abstract class, so it’s not possible to use it directly and a derived class needs to be created first. This derived class should contain declarations of methods shared between client and server, creating sort of a contract, similar to the one that can be found in WCF.
 
@@ -702,5 +707,5 @@ Something worth pointing out at this point is also naming convention. ServiceMan
 
 WCF offers function to make callbacks – remote execution from server to clients. This is also available in CommsNet library, but since default DuplexConnection is by definition two-way, there’s no strict difference between communication’s direction. Server can execute methods remotely using exactly same API as clients. The only difference is that server needs to provide session identity as an additional parameter to address specific client.
 
-## Attributions
+## 5. Attributions
 Library icon by <a href="https://www.flaticon.com/free-icons/teamwork" title="teamwork icons">Teamwork icons created by Becris - Flaticon</a>
