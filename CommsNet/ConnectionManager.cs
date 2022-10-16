@@ -129,7 +129,7 @@ namespace CommsNet
 
             IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, localPort);
             TcpClient tcpClient = new TcpClient(localEndPoint);
-            tcpClient.Connect(Host, Port);
+            await tcpClient.ConnectAsync(Host, Port);
 
             connection = new DuplexConnection(tcpClient);
 
