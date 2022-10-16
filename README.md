@@ -1,6 +1,40 @@
 # CommsNet - Network abstraction library
 
-__TOC__
+Net Standard 2.0 communication framework. WCF replacement. Uses MessagePack for serialization.
+
+**Table of Contents**
+- [CommsNet - Network abstraction library](#commsnet---network-abstraction-library)
+  - [1. Overview](#1-overview)
+  - [2. CommsNet architecture](#2-commsnet-architecture)
+    - [A. DuplexConnection](#a-duplexconnection)
+      - [I. Creating DuplexConnection](#i-creating-duplexconnection)
+      - [II. Sending data](#ii-sending-data)
+      - [III. Receiving data](#iii-receiving-data)
+      - [IV. Error handling](#iv-error-handling)
+      - [V. Log](#v-log)
+      - [VI. Stopping transmission](#vi-stopping-transmission)
+    - [B. ConnectionManager](#b-connectionmanager)
+      - [I. Creating ConnectionManager](#i-creating-connectionmanager)
+      - [II. Client and server](#ii-client-and-server)
+      - [III. New sessions](#iii-new-sessions)
+      - [IV. Accessing session](#iv-accessing-session)
+      - [V. Sending data](#v-sending-data)
+      - [VI. Receiving data](#vi-receiving-data)
+      - [VII. Error handling](#vii-error-handling)
+      - [VIII. Stop listener](#viii-stop-listener)
+    - [C. ServiceManager](#c-servicemanager)
+      - [I. Creating ServiceManager](#i-creating-servicemanager)
+      - [II. ServiceManager as a server](#ii-servicemanager-as-a-server)
+      - [III. ServiceManager as a client](#iii-servicemanager-as-a-client)
+      - [IV. Log](#iv-log)
+  - [3. ServiceManager usage](#3-servicemanager-usage)
+    - [A. Preparing shared library](#a-preparing-shared-library)
+    - [B. Method declaration](#b-method-declaration)
+    - [C. Data containers](#c-data-containers)
+    - [D. Server-side instance and method implementation](#d-server-side-instance-and-method-implementation)
+    - [E. Client-side instance and remote execution](#e-client-side-instance-and-remote-execution)
+    - [F. Interface-less implementation](#f-interface-less-implementation)
+    - [G. Callbacks](#g-callbacks)
 
 ## 1. Overview
 
@@ -15,8 +49,9 @@ CommsNet provides following functions:
 - Easy-to-use error handling mechanism based on event model.
 
 CommsNet is compatible with .NET Framework 4.7.2 and 4.8, .NET Standard 2.0, .NET Core 3.1 and .NET 5.
+
 Library can be added to the project using NuGet package: link
-Or with Package Manager command: **PM> Install-Package CommsNet**
+or with Package Manager command: **PM> Install-Package CommsNet**
 
 ## 2. CommsNet architecture
 
