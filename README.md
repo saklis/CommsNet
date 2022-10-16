@@ -48,10 +48,9 @@ CommsNet provides following functions:
 - Near-instant notification on both sides in case of connection issues.
 - Easy-to-use error handling mechanism based on event model.
 
-CommsNet is compatible with .NET Framework 4.7.2 and 4.8, .NET Standard 2.0, .NET Core 3.1 and .NET 5.
+CommsNet is writtem in NET Standard 2.0 and is compatible with .NET Framework 4.7.2 and newer, .NET Standard 2.0 and newer, .NET Core 2.0 and newer as well as .NET 5 and newer.
 
-Library can be added to the project using NuGet package: link
-or with Package Manager command: **PM> Install-Package CommsNet**
+Library can be added to the project using NuGet package: (link incoming)
 
 ## 2. CommsNet architecture
 
