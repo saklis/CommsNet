@@ -1,0 +1,75 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31005.135
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommsNet", "CommsNet\CommsNet.csproj", "{95A8A479-400B-44CA-BFFE-C4E2980BDCE3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Clients", "Clients", "{08AA46B0-AC4C-4E0E-94F9-C40DB59D70F9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Servers", "Servers", "{C6647D8C-B72F-4BA1-B29F-15CBBEB0B09D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{35A6543D-D263-4A76-AD6E-2708F44A85EE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedLibrary", "SharedLibrary\SharedLibrary.csproj", "{0F2DA469-26F0-41FC-B28A-10D5DB379CED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientConsoleApp", "ClientConsoleApp\ClientConsoleApp.csproj", "{A565F1B5-03FB-4019-95A9-085A2280C04A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerConsoleApp", "ServerConsoleApp\ServerConsoleApp.csproj", "{D6C39523-A2F5-4956-B7BE-3AFA00523D65}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{95A8A479-400B-44CA-BFFE-C4E2980BDCE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95A8A479-400B-44CA-BFFE-C4E2980BDCE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95A8A479-400B-44CA-BFFE-C4E2980BDCE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95A8A479-400B-44CA-BFFE-C4E2980BDCE3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F2DA469-26F0-41FC-B28A-10D5DB379CED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F2DA469-26F0-41FC-B28A-10D5DB379CED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F2DA469-26F0-41FC-B28A-10D5DB379CED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F2DA469-26F0-41FC-B28A-10D5DB379CED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A565F1B5-03FB-4019-95A9-085A2280C04A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A565F1B5-03FB-4019-95A9-085A2280C04A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A565F1B5-03FB-4019-95A9-085A2280C04A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A565F1B5-03FB-4019-95A9-085A2280C04A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6C39523-A2F5-4956-B7BE-3AFA00523D65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6C39523-A2F5-4956-B7BE-3AFA00523D65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6C39523-A2F5-4956-B7BE-3AFA00523D65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6C39523-A2F5-4956-B7BE-3AFA00523D65}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0F2DA469-26F0-41FC-B28A-10D5DB379CED} = {35A6543D-D263-4A76-AD6E-2708F44A85EE}
+		{A565F1B5-03FB-4019-95A9-085A2280C04A} = {08AA46B0-AC4C-4E0E-94F9-C40DB59D70F9}
+		{D6C39523-A2F5-4956-B7BE-3AFA00523D65} = {C6647D8C-B72F-4BA1-B29F-15CBBEB0B09D}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B8A01AEB-273B-41E4-9046-4F23DB23099A}
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 5
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://srv-tfs2:8080/tfs/defaultcollection
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = CommsNet\\CommsNet.csproj
+		SccProjectName1 = CommsNet
+		SccLocalPath1 = CommsNet
+		SccProjectUniqueName2 = SharedLibrary\\SharedLibrary.csproj
+		SccProjectTopLevelParentUniqueName2 = CommsNet.sln
+		SccProjectName2 = SharedLibrary
+		SccLocalPath2 = SharedLibrary
+		SccProjectUniqueName3 = ClientConsoleApp\\ClientConsoleApp.csproj
+		SccProjectTopLevelParentUniqueName3 = CommsNet.sln
+		SccProjectName3 = ClientConsoleApp
+		SccLocalPath3 = ClientConsoleApp
+		SccProjectUniqueName4 = ServerConsoleApp\\ServerConsoleApp.csproj
+		SccProjectTopLevelParentUniqueName4 = CommsNet.sln
+		SccProjectName4 = ServerConsoleApp
+		SccLocalPath4 = ServerConsoleApp
+	EndGlobalSection
+EndGlobal
