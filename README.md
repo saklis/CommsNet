@@ -1,6 +1,6 @@
 # CommsNet - Network abstraction library
 
-[[_TOC_]]
+__TOC__
 
 ## 1. Overview
 
@@ -15,7 +15,7 @@ CommsNet provides following functions:
 - Easy-to-use error handling mechanism based on event model.
 
 CommsNet is compatible with .NET Framework 4.7.2 and 4.8, .NET Standard 2.0, .NET Core 3.1 and .NET 5.
-Library can be added to project using Sews-Cabind NuGet feed: [http://srv-tfs2:8080/tfs/DefaultCollection/NuGet/_packaging?_a=package&feed=NuGet.cabind.gr&package=CommsNet&protocolType=NuGet](http://srv-tfs2:8080/tfs/DefaultCollection/NuGet/_packaging?_a=package&feed=NuGet.cabind.gr&package=CommsNet&protocolType=NuGet)
+Library can be added to the project using NuGet package: link
 Or with Package Manager command: **PM> Install-Package CommsNet**
 
 ## 2. CommsNet architecture
