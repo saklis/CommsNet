@@ -10,42 +10,34 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>0.15.0.0</AssemblyVersion>
-    <FileVersion>0.15.0.0</FileVersion>
-    <Version>0.15.0</Version>
-    <RepositoryUrl>http://srv-tfs2:8080/tfs/DefaultCollection/CommsNet/_versionControl</RepositoryUrl>
-    <PackageProjectUrl>http://srv-tfs2:8080/tfs/DefaultCollection/CommsNet</PackageProjectUrl>
-    <Authors>S.Kliś</Authors>
-    <Company>SEWS-Cabind S.p.A.</Company>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <FileVersion>1.0.0</FileVersion>
+    <Version>1.0.0</Version>
+    <RepositoryUrl>https://github.com/saklis/CommsNet</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/saklis/CommsNet</PackageProjectUrl>
+    <Authors>Sebastian Kliś</Authors>
+    <Company>saklis</Company>
     <Description>Network abstraction layer with session functionality and remote execution support.</Description>
-    <PackageReleaseNotes>0.15.0:
-- Renamed class TransmissionHeader to Transmission.
-- SessionIdentity removed as a required argument of remotelly executable method.
-0.14.0:
-- Split transmission into two separate packets - transmission metadata (currently only length) are sent separately now.
-- Added timeout to server-side data listener to handle situation, where transmission content won't arrive after metadata packet.
-0.13.3: Fixed situation when sometimes data received event could be incorrectly invoked for 0-length data array.
-0.13.0: DuplexConnection can corrrectly handle long transmissions now. Max Transmission Length was removed.
-0.12.1: Unify error handling - now directly called mothods throw exceptions while errors in internal events are signaled through invoking proper events.
-0.12.0: Rewritten (de)serialization and transmission structure. More efficient, type-agnostic package building.
-0.9.0: Removed dependency on common .Net version between client and server for (de)serialization.
-0.8.2: WebSocked support was removed. Added better internal errors reporting.
-0.8.1: Change synchronouse call of WebSocket.ConnectAsync() to version compatibile with WASM.
-0.8.0: Added support for WebSocket backend.
-0.7.0: ExecuteRemoteAsync  will no longer wait for server's response if there's no return value expected.
-0.6.2: ExecuteRemoteAsync will now throw MessagePackSerializationException in case of (de)serialization issues.
-0.6.1: Fix for some missing typeless APIs
-0.6.0: Switched to MessagePack's typeless API to support nested composition types.
-0.5.3: Changed MaxTransmissionLength type to int (was uint) for compatibility.
-0.5.2: DuplexConnection automatically queues up threds trying to send data using Send() or SendAsync().
-0.5.1: DuplexConnection now correctly informs about sending IO errors.
-0.5.0: Supported framework versions: .NET Framework 4.7.2 and 4.8, .NET Standard 2.0, .NET Core 3.1, .NET 5
-0.3.0: Added support for remote execution timeout. Timeout can be set through new property: ServiceManager.ExecuteRemoteResponseTimeout
-0.2.0: Added support for [DataContract] annotations.
-0.1.2: Renamed class SessionManager to ServiceManager to better reflect its functionality.
-0.1.1: Initial release.</PackageReleaseNotes>
-    <PackageIcon>CommsNetIcon.jpg</PackageIcon>
+    <PackageReleaseNotes>1.0.0:
+- Initial release</PackageReleaseNotes>
+    <PackageIcon>networking.png</PackageIcon>
+    <Title>CommsNet</Title>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>rpc;network;wcf;</PackageTags>
+    <Copyright></Copyright>
+    <PackageLicenseFile>LICENCE</PackageLicenseFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\networking.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENCE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="MessagePack" Version="2.2.85" />
@@ -60,10 +52,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Resources\CommsNetIcon.jpg">
+    <Resource Include="Resources\networking.png">
       <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
+      <PackagePath>\</PackagePath>
+    </Resource>
   </ItemGroup>
 
 </Project>
