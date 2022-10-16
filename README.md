@@ -701,3 +701,6 @@ Something worth pointing out at this point is also naming convention. ServiceMan
 ### G. Callbacks
 
 WCF offers function to make callbacks – remote execution from server to clients. This is also available in CommsNet library, but since default DuplexConnection is by definition two-way, there’s no strict difference between communication’s direction. Server can execute methods remotely using exactly same API as clients. The only difference is that server needs to provide session identity as an additional parameter to address specific client.
+
+## Attributions
+Library icon by <a href="https://www.flaticon.com/free-icons/teamwork" title="teamwork icons">Teamwork icons created by Becris - Flaticon</a>
