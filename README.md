@@ -466,7 +466,7 @@ For purpose of CommsNet, container types needs to be defined in the same externa
 
 Example composite types HelloRequest and HelloResponse are defined right next to the IServiceInterface.
 
-![image.png](/.attachments/image-353f3d11-06a7-44dc-af45-1414c27f7831.png)
+![.assets/data_containers.jpg](.assets/data_containers.jpg)
 
 Container class must meet following requirement:
 - Class must be public.
