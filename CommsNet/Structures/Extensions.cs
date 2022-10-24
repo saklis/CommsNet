@@ -11,6 +11,7 @@ namespace CommsNet.Structures
         /// <param name="this">       MethodInfo object. </param>
         /// <param name="obj">        Instance on which method will be executed. </param>
         /// <param name="parameters"> Method's parameters. </param>
+        /// <remarks> Thanks to Scott Chamberlain. Source: https://stackoverflow.com/a/39679855 </remarks>
         /// <returns> Result. </returns>
         public static async Task<object> InvokeAsync(this MethodInfo @this, object obj, params object[] parameters)
         {
@@ -25,6 +26,7 @@ namespace CommsNet.Structures
         /// <param name="this">       MethodInfo object. </param>
         /// <param name="obj">        Instance on which method will be executed. </param>
         /// <param name="parameters"> Method's parameters. </param>
+        /// <remarks> Thanks to Scott Chamberlain. Source: https://stackoverflow.com/a/39679855 </remarks>
         public static async Task InvokeVoidAsync(this MethodInfo @this, object obj, params object[] parameters)
         {
             dynamic awaitable = @this.Invoke(obj, parameters);
