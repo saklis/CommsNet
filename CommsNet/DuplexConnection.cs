@@ -5,10 +5,10 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace CommsNet
-{
-    public class DuplexConnection
-    {
+namespace CommsNet {
+    public class DuplexConnection {
+        public delegate void ConnectionClosedRemotelyDelegate();
+
         public delegate void DataReceivedDelegate(byte[] data);
 
         public delegate void ErrorEncounteredDelegate(Exception ex);
@@ -24,21 +24,21 @@ namespace CommsNet
 
         protected TcpClient _tcpClient;
 
+        protected byte[] _command_disconnected = { 42 };
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="DuplexConnection" /> class.
         /// </summary>
-        public DuplexConnection(TcpClient tcpClient)
-        {
-            _tcpClient = tcpClient;
+        public DuplexConnection(TcpClient tcpClient) {
+            _tcpClient                   = tcpClient;
             _tcpClient.ReceiveBufferSize = int.MaxValue;
-            _tcpClient.SendBufferSize = int.MaxValue;
+            _tcpClient.SendBufferSize    = int.MaxValue;
         }
 
         /// <summary>
         ///     Inheritance constructor
         /// </summary>
-        protected DuplexConnection()
-        {
+        protected DuplexConnection() {
             // intentionally left empty
         }
 
@@ -75,6 +75,11 @@ namespace CommsNet
         public event ErrorEncounteredDelegate ErrorEncountered;
 
         /// <summary>
+        ///     TCP connection was closed by the other side.
+        /// </summary>
+        public event ConnectionClosedRemotelyDelegate ConnectionClosedRemotely;
+
+        /// <summary>
         ///     Leg entry was generated.
         /// </summary>
         public event LogDelegate Log;
@@ -82,8 +87,8 @@ namespace CommsNet
         /// <summary>
         ///     Close connection.
         /// </summary>
-        public void Disconnect()
-        {
+        public void Disconnect() {
+            Send(_command_disconnected);
             StopListening();
             _tcpClient.Close();
         }
@@ -92,30 +97,22 @@ namespace CommsNet
         ///     SendAsync data to connected client.
         /// </summary>
         /// <param name="data"> Data to be send. </param>
-        public void Send(byte[] data)
-        {
-            try
-            {
+        public void Send(byte[] data) {
+            try {
                 _semaphore.Wait();
-                try
-                {
+                try {
                     byte[] dataLengthBytes = BitConverter.GetBytes(data.Length); // data.Length is Int32 - assume 4 bytes length
                     Log?.Invoke($"CN>DC: Sending transmission. Data length: {data.Length};");
                     _tcpClient.GetStream().Write(dataLengthBytes, 0, dataLengthBytes.Length);
                     _tcpClient.GetStream().Write(data, 0, data.Length);
                     Log?.Invoke($"CN>DC: Transmission sent.");
-                }
-                finally
-                {
+                } finally {
                     _semaphore.Release();
                 }
-            }
-            catch (IOException ex)
-            {
+            } catch (IOException ex) {
                 ErrorEncountered?.Invoke(ex);
 
-                if (!SuppressExceptions)
-                {
+                if (!SuppressExceptions) {
                     throw;
                 }
             }
@@ -128,30 +125,22 @@ namespace CommsNet
         /// <param name="token">
         ///     Optional cancellation token that can be used to cancel operation before it's completed.
         /// </param>
-        public async Task SendAsync(byte[] data, CancellationToken token = default(CancellationToken))
-        {
-            try
-            {
+        public async Task SendAsync(byte[] data, CancellationToken token = default(CancellationToken)) {
+            try {
                 await _semaphore.WaitAsync(token);
-                try
-                {
+                try {
                     byte[] dataLengthBytes = BitConverter.GetBytes(data.Length); // data.Length is Int32 - assume 4 bytes length
                     Log?.Invoke($"CN>DC: Sending transmission. Data length: {data.Length};");
                     await _tcpClient.GetStream().WriteAsync(dataLengthBytes, 0, dataLengthBytes.Length, token);
                     await _tcpClient.GetStream().WriteAsync(data, 0, data.Length, token);
                     Log?.Invoke($"CN>DC: Transmission sent.");
-                }
-                finally
-                {
+                } finally {
                     _semaphore.Release();
                 }
-            }
-            catch (IOException ex)
-            {
+            } catch (IOException ex) {
                 ErrorEncountered?.Invoke(ex);
 
-                if (!SuppressExceptions)
-                {
+                if (!SuppressExceptions) {
                     throw;
                 }
             }
@@ -160,8 +149,7 @@ namespace CommsNet
         /// <summary>
         ///     Creates a background thread listening for message from the client.
         /// </summary>
-        public void StartListening(Action<byte[]> onDataReceived)
-        {
+        public void StartListening(Action<byte[]> onDataReceived) {
             CancellationToken token = _cancellationTokens.Token;
 
             DataReceived += data => { onDataReceived(data); };
@@ -173,14 +161,11 @@ namespace CommsNet
         /// <summary>
         ///     Stops background listening thread.
         /// </summary>
-        public void StopListening()
-        {
+        public void StopListening() {
             _cancellationTokens?.Cancel();
 
-            if (DataReceived != null)
-            {
-                foreach (Delegate @delegate in DataReceived.GetInvocationList())
-                {
+            if (DataReceived != null) {
+                foreach (Delegate @delegate in DataReceived.GetInvocationList()) {
                     DataReceived -= @delegate as DataReceivedDelegate;
                 }
             }
@@ -191,8 +176,7 @@ namespace CommsNet
         /// </summary>
         /// <param name="data"> Original data. </param>
         /// <returns> Data with length. </returns>
-        protected byte[] AddLengthAtBeginning(byte[] data)
-        {
+        protected byte[] AddLengthAtBeginning(byte[] data) {
             byte[] dataLengthBytes = BitConverter.GetBytes(data.Length); // data.Length is Int32 - assume 4 bytes length
 
             byte[] dataWithLength = new byte[data.Length + 4];
@@ -202,14 +186,10 @@ namespace CommsNet
             return dataWithLength;
         }
 
-        protected void InvokeDataReceived(byte[] data)
-        {
-            if (SynchronizationContext != null)
-            {
+        protected void InvokeDataReceived(byte[] data) {
+            if (SynchronizationContext != null) {
                 SynchronizationContext.Post(delegate { DataReceived?.Invoke(data); }, null);
-            }
-            else
-            {
+            } else {
                 DataReceived?.Invoke(data);
             }
         }
@@ -219,28 +199,30 @@ namespace CommsNet
         /// </summary>
         /// <param name="client"> Reference to TcpClient to listen too. </param>
         /// <param name="token">  Cancellation token. </param>
-        protected async void TcpBackgroundListener(TcpClient client, CancellationToken token)
-        {
-            byte[] buffer = new byte[1000000];
-            NetworkStream stream = client.GetStream();
-            Stopwatch timeoutWatch = new Stopwatch();
+        protected async void TcpBackgroundListener(TcpClient client, CancellationToken token) {
+            byte[]        buffer       = new byte[1000000];
+            NetworkStream stream       = client.GetStream();
+            Stopwatch     timeoutWatch = new Stopwatch();
 
-            while (!token.IsCancellationRequested)
-            {
-                try
-                {
-                    byte[] data = new byte[0];
-                    int bytesReadCount = 0;
+            while (!token.IsCancellationRequested) {
+                try {
+                    // if (client.Client.Poll(1, SelectMode.SelectRead)) {
+                    //     ConnectionClosedRemotely?.Invoke();
+                    //     StopListening();
+                    //     return;
+                    // }
+
+                    byte[] data           = Array.Empty<byte>();
+                    int    bytesReadCount = 0;
 
                     int dataAlreadyRead = 0;
-                    int dataLength = 0;
+                    int dataLength      = 0;
 
                     timeoutWatch.Reset();
 
                     while ((bytesReadCount = await stream.ReadAsync(buffer, 0, 4, token)) != 0) // read 4 bytes - int32 length of next transmission.
                     {
-                        if (token.IsCancellationRequested)
-                        {
+                        if (token.IsCancellationRequested) {
                             return;
                         }
 
@@ -256,17 +238,13 @@ namespace CommsNet
 
                         timeoutWatch.Start();
 
-                        do
-                        {
-                            if (timeoutWatch.ElapsedMilliseconds > TransmissionReceivedTimeout)
-                            {
-                                throw new TimeoutException(
-                                    $"Duplex Connection received declaration of transmission of size {dataLength} but only received {dataAlreadyRead} bytes within {TransmissionReceivedTimeout} milliseconds.");
+                        do {
+                            if (timeoutWatch.ElapsedMilliseconds > TransmissionReceivedTimeout) {
+                                throw new TimeoutException($"Duplex Connection received declaration of transmission of size {dataLength} but only received {dataAlreadyRead} bytes within {TransmissionReceivedTimeout} milliseconds.");
                             }
 
                             int readCount = stream.Read(buffer, 0, dataLength - dataAlreadyRead < buffer.Length ? dataLength - dataAlreadyRead : buffer.Length);
-                            if (readCount > 0)
-                            {
+                            if (readCount > 0) {
                                 Array.Copy(buffer, 0, data, dataAlreadyRead, readCount);
                             }
 
@@ -275,26 +253,28 @@ namespace CommsNet
                         } while (dataAlreadyRead < dataLength);
 
                         Log?.Invoke($"CN>DC: Data received reporting to Service Manager. Length: {data.Length};");
+
+                        if (data.Length == _command_disconnected.Length && data[0] == _command_disconnected[0]) {
+                            Log?.Invoke("CN>DC: Remote disconnection command received.");
+                            ConnectionClosedRemotely?.Invoke();
+                            StopListening();
+                            return;
+                        }
+                        
                         InvokeDataReceived(data);
                         Log?.Invoke($"CN>DC: Transmission length == data read. Breaking wait loop...");
                         break;
                     }
-                }
-                catch (OperationCanceledException)
-                {
+                } catch (OperationCanceledException) {
                     /* ignore */
-                }
-                catch (Exception ex)
-                {
+                } catch (Exception ex) {
                     ErrorEncountered?.Invoke(ex);
 
-                    if (StopListeningForTransmissionOnError)
-                    {
+                    if (StopListeningForTransmissionOnError) {
                         StopListening();
                     }
 
-                    if (!SuppressExceptions)
-                    {
+                    if (!SuppressExceptions) {
                         throw;
                     }
                 }

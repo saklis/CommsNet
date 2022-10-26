@@ -15,11 +15,15 @@ namespace ServerConsoleApp
             ServiceServer server = new ServiceServer();
             server.NewConnectionEstablished += (identity, connection) => Console.WriteLine($"New connection accepted! Identity: {identity}");
             server.SessionEncounteredError += (identity, exception) =>
-            {
-                Console.WriteLine();
-                Console.WriteLine($"Exception in CommsNet encountered! Session: {identity}");
-                Console.WriteLine(exception);
-            };
+                                              {
+                                                  Console.WriteLine();
+                                                  Console.WriteLine($"Exception in CommsNet encountered! Session: {identity}");
+                                                  Console.WriteLine(exception);
+                                              };
+            server.ConnectionClosedRemotely += identity => {
+                                                   Console.WriteLine();
+                                                   Console.WriteLine($"Client {identity} closed connection from its side.");
+                                               };
             server.StartServer(12345);
             Console.WriteLine("Success!");
 

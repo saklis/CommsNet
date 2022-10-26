@@ -22,45 +22,34 @@ namespace ClientConsoleApp
                 Console.WriteLine("Exception in CommsNet encountered!");
                 Console.WriteLine(exception);
             };
-            client.ConnectToServer("localhost", 12345, 12346);
+            client.ConnectionClosedRemotely += identity => {
+                                                   Console.WriteLine();
+                                                   Console.WriteLine($"Server closed connection.");
+                                               };
 
+            client.ConnectToServer("localhost", 12345, 12346);
+            
             Console.WriteLine("Connected!");
 
-            try
-            {
-                // call Ping method
-                WaitForKey("Press any key to call Ping...");
-
-                Console.Write("Calling Ping... ");
-                await client.Ping();
+            try {
+                // test RemoteCallAsync method
+                WaitForKey("Press any key to test RemoteCall...");
+                
+                Console.Write("Calling TestRemoteCall... ");
+                int result = await client.TestRemoteCall("foo", "bar", 24);
                 Console.WriteLine("Success!");
-
-                // call SayHello
-                WaitForKey("Press any key to call SayHello...");
-
-                HelloRequest request = new HelloRequest()
-                {
-                    Greetings = "Hello from the client!",
-                    SomeFloat = 42.42f
-                };
-
-                Console.Write("Calling SayHello...");
-                HelloResponse response = await client.SayHello(request);
-                Console.WriteLine($"Success! Response: {response.Reply}");
-
+                Console.WriteLine($"Result of RemoteCall test is: {result}");
+                
                 // close connection
                 WaitForKey("Press any key to close connection...");
-
+                
                 Console.Write("Closing connection...");
                 client.DisconnectFromServer();
-            }
-            catch (Exception e)
-            {
+                
+            } catch (Exception e) {
                 Console.WriteLine();
                 Console.WriteLine(e);
-            }
-            finally
-            {
+            } finally {
                 Console.WriteLine();
                 WaitForKey("Press any key to close console...");
             }

@@ -21,6 +21,8 @@ namespace CommsNet
 
         public delegate void SessionEncounteredErrorDelegate(Guid sessionIdentity, Exception ex);
 
+        public delegate void ConnectionClosedRemotelyDelegate(Guid sessionIdentity);
+
         protected CancellationTokenSource _cancellationTokens = new CancellationTokenSource();
 
         /// <summary>
@@ -87,6 +89,11 @@ namespace CommsNet
         public event SessionEncounteredErrorDelegate SessionEncounteredError;
 
         /// <summary>
+        ///     Session was closed from the other side.
+        /// </summary>
+        public event ConnectionClosedRemotelyDelegate ConnectionClosedRemotely;
+
+        /// <summary>
         ///     Internal event invoked when new connection appeared for the first time.
         /// </summary>
         protected event NewConnectionReceivedDelegate NewConnectionReceived;
@@ -140,6 +147,7 @@ namespace CommsNet
                 session.AddListener(OnDataReceived);
             }
             session.ErrorEncountered += OnSessionErrorEncountered;
+            session.ConnectionClosedRemotely += OnConnectionClosedRemotely;
 
             if (_connections.TryAdd(newGuid, session))
             {
@@ -147,6 +155,11 @@ namespace CommsNet
             }
 
             return connection;
+        }
+
+        private void OnConnectionClosedRemotely(Guid sessionIdentity) {
+            CloseSession(sessionIdentity);
+            ConnectionClosedRemotely?.Invoke(sessionIdentity);
         }
 
         /// <summary>
@@ -226,7 +239,8 @@ namespace CommsNet
             {
                 session.AddListener(OnDataReceived);
             }
-            session.ErrorEncountered += OnSessionErrorEncountered;
+            session.ErrorEncountered         += OnSessionErrorEncountered;
+            session.ConnectionClosedRemotely += OnConnectionClosedRemotely;
 
 
             if (_connections.TryAdd(newGuid, session))
