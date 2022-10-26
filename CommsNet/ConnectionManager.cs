@@ -1,27 +1,24 @@
-﻿using CommsNet.Structures;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using CommsNet.Structures;
 
-namespace CommsNet
-{
+namespace CommsNet {
     /// <summary>
     ///     Handle multiple connections and sessions.
     /// </summary>
-    public class ConnectionManager
-    {
+    public class ConnectionManager {
+        public delegate void ConnectionClosedRemotelyDelegate(Guid sessionIdentity);
+
         public delegate void DataReceivedDelegate(Guid identifier, byte[] data);
 
         public delegate void NewConnectionEstablishedDelegate(Guid identifier, DuplexConnection connection);
 
         public delegate void SessionEncounteredErrorDelegate(Guid sessionIdentity, Exception ex);
-
-        public delegate void ConnectionClosedRemotelyDelegate(Guid sessionIdentity);
 
         protected CancellationTokenSource _cancellationTokens = new CancellationTokenSource();
 
@@ -35,7 +32,9 @@ namespace CommsNet
         /// <summary>
         ///     Initializes a new instance of the <see cref="ConnectionManager" /> class.
         /// </summary>
-        public ConnectionManager() => NewConnectionReceived += OnNewConnectionReceived;
+        public ConnectionManager() {
+            NewConnectionReceived += OnNewConnectionReceived;
+        }
 
         /// <summary>
         ///     Should all connection have listener assigned to them. If true,
@@ -51,27 +50,22 @@ namespace CommsNet
         public string Host { get; protected set; }
 
         /// <summary>
-        ///     Server's Port.
-        /// </summary>
-        public int Port { get; protected set; }
-
-        /// <summary>
         ///     Get <see cref="DuplexConnection" /> object with provided session identity.
         /// </summary>
         /// <param name="key"> ServiceManager identity. </param>
         /// <returns> Connection object. </returns>
-        public DuplexConnection this[Guid key]
-        {
-            get
-            {
-                if (_connections.ContainsKey(key))
-                {
-                    return _connections[key].Connection;
-                }
+        public DuplexConnection this[Guid key] {
+            get {
+                if (_connections.ContainsKey(key)) return _connections[key].Connection;
 
                 return null;
             }
         }
+
+        /// <summary>
+        ///     Server's Port.
+        /// </summary>
+        public int Port { get; protected set; }
 
         /// <summary>
         ///     New data was received from remote client.
@@ -102,10 +96,8 @@ namespace CommsNet
         ///     Close provided session and remove it from connection list.
         /// </summary>
         /// <param name="sessionIdentity"> Session identity of session to be closed. </param>
-        public void CloseSession(Guid sessionIdentity)
-        {
-            if (_connections.ContainsKey(sessionIdentity))
-            {
+        public void CloseSession(Guid sessionIdentity) {
+            if (_connections.ContainsKey(sessionIdentity)) {
                 _connections[sessionIdentity].Connection.Disconnect();
                 _connections.TryRemove(sessionIdentity, out _);
             }
@@ -122,37 +114,27 @@ namespace CommsNet
         ///     same port number as remote one will be used.
         /// </param>
         /// <returns> Connection object. </returns>
-        public async Task<DuplexConnection> ConnectAsync(string host, int port, int localPort = 0)
-        {
+        public async Task<DuplexConnection> ConnectAsync(string host, int port, int localPort = 0) {
             Host = host;
             Port = port;
 
-            if (localPort == 0)
-            {
-                localPort = Port;
-            }
+            if (localPort == 0) localPort = Port;
 
             DuplexConnection connection;
 
             IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, localPort);
-            TcpClient tcpClient = new TcpClient(localEndPoint);
+            TcpClient  tcpClient     = new TcpClient(localEndPoint);
             await tcpClient.ConnectAsync(Host, Port);
 
             connection = new DuplexConnection(tcpClient);
 
-            Guid newGuid = Guid.NewGuid();
+            Guid            newGuid = Guid.NewGuid();
             InternalSession session = new InternalSession(newGuid, connection);
-            if (AddListenerToEstablishedConnections)
-            {
-                session.AddListener(OnDataReceived);
-            }
-            session.ErrorEncountered += OnSessionErrorEncountered;
+            if (AddListenerToEstablishedConnections) session.AddListener(OnDataReceived);
+            session.ErrorEncountered         += OnSessionErrorEncountered;
             session.ConnectionClosedRemotely += OnConnectionClosedRemotely;
 
-            if (_connections.TryAdd(newGuid, session))
-            {
-                NewConnectionEstablished?.Invoke(newGuid, connection);
-            }
+            if (_connections.TryAdd(newGuid, session)) NewConnectionEstablished?.Invoke(newGuid, connection);
 
             return connection;
         }
@@ -168,12 +150,8 @@ namespace CommsNet
         /// <param name="sessionIdentity"> Client's session identity. </param>
         /// <param name="data">            Data to sent. </param>
         /// <param name="token">           Cancellation token. </param>
-        public async void SendAsync(Guid sessionIdentity, byte[] data, CancellationToken token = default(CancellationToken))
-        {
-            if (token == default(CancellationToken))
-            {
-                token = _cancellationTokens.Token;
-            }
+        public async void SendAsync(Guid sessionIdentity, byte[] data, CancellationToken token = default(CancellationToken)) {
+            if (token == default(CancellationToken)) token = _cancellationTokens.Token;
 
             await this[sessionIdentity].SendAsync(data, token);
         }
@@ -182,8 +160,7 @@ namespace CommsNet
         ///     Start listening to new connections on provided port.
         /// </summary>
         /// <param name="port"> Port number. </param>
-        public void Start(int port)
-        {
+        public void Start(int port) {
             Port = port;
 
             CancellationToken token = _cancellationTokens.Token;
@@ -196,15 +173,10 @@ namespace CommsNet
         /// <summary>
         ///     Stop listening to new connections or to incoming transmissions.
         /// </summary>
-        public void Stop()
-        {
+        public void Stop() {
             if (AddListenerToEstablishedConnections)
-            {
                 foreach (KeyValuePair<Guid, InternalSession> keyValuePair in _connections)
-                {
                     keyValuePair.Value.Connection.Disconnect();
-                }
-            }
             _cancellationTokens.Cancel();
         }
 
@@ -214,12 +186,10 @@ namespace CommsNet
         /// </summary>
         /// <param name="token"> Cancellation token. </param>
         /// <returns> Encapsulating task. </returns>
-        protected async Task ConnectionListener(CancellationToken token)
-        {
+        protected async Task ConnectionListener(CancellationToken token) {
             _tcpListener.Start();
 
-            while (!token.IsCancellationRequested)
-            {
+            while (!token.IsCancellationRequested) {
                 TcpClient client = await _tcpListener.AcceptTcpClientAsync();
                 NewConnectionReceived?.Invoke(client);
             }
@@ -229,24 +199,17 @@ namespace CommsNet
         ///     Handling new connections.
         /// </summary>
         /// <param name="client"> <see cref="TcpClient" /> representing new connection. </param>
-        protected void OnNewConnectionReceived(TcpClient client)
-        {
+        protected void OnNewConnectionReceived(TcpClient client) {
             DuplexConnection connection = new DuplexConnection(client);
 
-            Guid newGuid = Guid.NewGuid();
+            Guid            newGuid = Guid.NewGuid();
             InternalSession session = new InternalSession(newGuid, connection);
-            if (AddListenerToEstablishedConnections)
-            {
-                session.AddListener(OnDataReceived);
-            }
+            if (AddListenerToEstablishedConnections) session.AddListener(OnDataReceived);
             session.ErrorEncountered         += OnSessionErrorEncountered;
             session.ConnectionClosedRemotely += OnConnectionClosedRemotely;
 
 
-            if (_connections.TryAdd(newGuid, session))
-            {
-                NewConnectionEstablished?.Invoke(newGuid, connection);
-            }
+            if (_connections.TryAdd(newGuid, session)) NewConnectionEstablished?.Invoke(newGuid, connection);
         }
 
         /// <summary>
@@ -254,8 +217,7 @@ namespace CommsNet
         /// </summary>
         /// <param name="identity"> ServiceManager identity. </param>
         /// <param name="data">     Data received. </param>
-        protected void OnDataReceived(Guid identity, byte[] data)
-        {
+        protected void OnDataReceived(Guid identity, byte[] data) {
             DataReceived?.Invoke(identity, data);
         }
 
@@ -264,8 +226,7 @@ namespace CommsNet
         /// </summary>
         /// <param name="sessionIdentity"> Session identity. </param>
         /// <param name="ex">              Inner exception. </param>
-        protected void OnSessionErrorEncountered(Guid sessionIdentity, Exception ex)
-        {
+        protected void OnSessionErrorEncountered(Guid sessionIdentity, Exception ex) {
             CloseSession(sessionIdentity);
             SessionEncounteredError?.Invoke(sessionIdentity, ex);
         }

@@ -1,26 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using MessagePack;
 
-namespace CommsNet.Structures
-{
+namespace CommsNet.Structures {
     /// <summary>
     ///     Supported transmission types.
     /// </summary>
-    public enum TransmissionType
-    {
-        Request = 0,
+    public enum TransmissionType {
+        Request  = 0,
         Response = 1
     }
 
     [Serializable]
     [MessagePackObject]
-    public class Transmission
-    {
+    public class Transmission {
+        /// <summary>
+        ///     Transmission's expiration time. At this time transmission will be removed from received collection.
+        /// </summary>
+        [Key(1)]
+        public DateTime ExpirationTime { get; set; } = DateTime.MaxValue;
+
         /// <summary>
         ///     Transmitted type.
         /// </summary>
@@ -28,10 +26,10 @@ namespace CommsNet.Structures
         public bool HasContent { get; set; }
 
         /// <summary>
-        ///     Transmission's expiration time. At this time transmission will be removed from received collection.
+        ///     Returned type.
         /// </summary>
-        [Key(1)]
-        public DateTime ExpirationTime { get; set; } = DateTime.MaxValue;
+        [Key(4)]
+        public bool HasReturn { get; set; }
 
         /// <summary>
         ///     Transmission identity. Used for building request-response pairs.
@@ -44,12 +42,6 @@ namespace CommsNet.Structures
         /// </summary>
         [Key(3)]
         public string MethodName { get; set; }
-
-        /// <summary>
-        ///     Returned type.
-        /// </summary>
-        [Key(4)]
-        public bool HasReturn { get; set; }
 
         /// <summary>
         ///     ServiceManager identity. Defines a target client on which method will be executed. May

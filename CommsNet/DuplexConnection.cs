@@ -18,13 +18,17 @@ namespace CommsNet {
         protected CancellationTokenSource _cancellationTokens = new CancellationTokenSource();
 
         /// <summary>
+        ///     Data sent through socket when client closes connection.
+        ///     <remarks>42 because... why not 42?</remarks>
+        /// </summary>
+        protected byte[] _command_disconnected = { 42 };
+
+        /// <summary>
         ///     Semaphore to ensure only one thread can send data at once.
         /// </summary>
         protected SemaphoreSlim _semaphore = new SemaphoreSlim(1);
 
         protected TcpClient _tcpClient;
-
-        protected byte[] _command_disconnected = { 42 };
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="DuplexConnection" /> class.
@@ -171,21 +175,6 @@ namespace CommsNet {
             }
         }
 
-        /// <summary>
-        ///     Returns new data array with length of the original added at the beginning.
-        /// </summary>
-        /// <param name="data"> Original data. </param>
-        /// <returns> Data with length. </returns>
-        protected byte[] AddLengthAtBeginning(byte[] data) {
-            byte[] dataLengthBytes = BitConverter.GetBytes(data.Length); // data.Length is Int32 - assume 4 bytes length
-
-            byte[] dataWithLength = new byte[data.Length + 4];
-            Array.Copy(dataLengthBytes, dataWithLength, 4);
-            Array.Copy(data, 0, dataWithLength, 4, data.Length);
-
-            return dataWithLength;
-        }
-
         protected void InvokeDataReceived(byte[] data) {
             if (SynchronizationContext != null) {
                 SynchronizationContext.Post(delegate { DataReceived?.Invoke(data); }, null);
@@ -206,12 +195,6 @@ namespace CommsNet {
 
             while (!token.IsCancellationRequested) {
                 try {
-                    // if (client.Client.Poll(1, SelectMode.SelectRead)) {
-                    //     ConnectionClosedRemotely?.Invoke();
-                    //     StopListening();
-                    //     return;
-                    // }
-
                     byte[] data           = Array.Empty<byte>();
                     int    bytesReadCount = 0;
 
@@ -260,7 +243,7 @@ namespace CommsNet {
                             StopListening();
                             return;
                         }
-                        
+
                         InvokeDataReceived(data);
                         Log?.Invoke($"CN>DC: Transmission length == data read. Breaking wait loop...");
                         break;
