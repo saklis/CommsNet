@@ -45,7 +45,7 @@ namespace CommsNet.Structures {
 
         /// <summary>
         ///     ServiceManager identity. Defines a target client on which method will be executed. May
-        ///     be empty or default if method is executed on the server.
+        ///     be 'default' or Guid.Empty if method is executed on the server.
         /// </summary>
         [Key(5)]
         public Guid SessionIdentity { get; set; }
