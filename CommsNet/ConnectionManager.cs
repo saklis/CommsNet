@@ -108,7 +108,6 @@ namespace CommsNet {
         /// </summary>
         /// <param name="host">      Server's name or IP address. </param>
         /// <param name="port">      Server's port number. </param>
-        /// <param name="backendType">Backend type that will be used in underlying DuplexConnections.</param>
         /// <param name="localPort">
         ///     Port used on local machine for receiving transmissions. Default value (0) means that
         ///     same port number as remote one will be used.
@@ -123,15 +122,15 @@ namespace CommsNet {
             DuplexConnection connection;
 
             IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, localPort);
-            TcpClient  tcpClient     = new TcpClient(localEndPoint);
+            TcpClient tcpClient = new TcpClient(localEndPoint);
             await tcpClient.ConnectAsync(Host, Port);
 
             connection = new DuplexConnection(tcpClient);
 
-            Guid            newGuid = Guid.NewGuid();
+            Guid newGuid = Guid.NewGuid();
             InternalSession session = new InternalSession(newGuid, connection);
             if (AddListenerToEstablishedConnections) session.AddListener(OnDataReceived);
-            session.ErrorEncountered         += OnSessionErrorEncountered;
+            session.ErrorEncountered += OnSessionErrorEncountered;
             session.ConnectionClosedRemotely += OnConnectionClosedRemotely;
 
             if (_connections.TryAdd(newGuid, session)) NewConnectionEstablished?.Invoke(newGuid, connection);
@@ -150,8 +149,8 @@ namespace CommsNet {
         /// <param name="sessionIdentity"> Client's session identity. </param>
         /// <param name="data">            Data to sent. </param>
         /// <param name="token">           Cancellation token. </param>
-        public async void SendAsync(Guid sessionIdentity, byte[] data, CancellationToken token = default(CancellationToken)) {
-            if (token == default(CancellationToken)) token = _cancellationTokens.Token;
+        public async void SendAsync(Guid sessionIdentity, byte[] data, CancellationToken token = default) {
+            if (token == default) token = _cancellationTokens.Token;
 
             await this[sessionIdentity].SendAsync(data, token);
         }
@@ -166,7 +165,12 @@ namespace CommsNet {
             CancellationToken token = _cancellationTokens.Token;
 
             _tcpListener = new TcpListener(IPAddress.Any, Port);
-            Task task = new Task(async () => await ConnectionListener(token), token, TaskCreationOptions.AttachedToParent | TaskCreationOptions.LongRunning);
+
+            async void ConnectionListenerAction() {
+                await ConnectionListener(token);
+            }
+
+            Task task = new Task(ConnectionListenerAction, token, TaskCreationOptions.AttachedToParent | TaskCreationOptions.LongRunning);
             task.Start();
         }
 
@@ -174,9 +178,12 @@ namespace CommsNet {
         ///     Stop listening to new connections or to incoming transmissions.
         /// </summary>
         public void Stop() {
-            if (AddListenerToEstablishedConnections)
-                foreach (KeyValuePair<Guid, InternalSession> keyValuePair in _connections)
+            if (AddListenerToEstablishedConnections) {
+                foreach (KeyValuePair<Guid, InternalSession> keyValuePair in _connections) {
                     keyValuePair.Value.Connection.Disconnect();
+                }
+            }
+
             _cancellationTokens.Cancel();
         }
 
@@ -202,10 +209,10 @@ namespace CommsNet {
         protected void OnNewConnectionReceived(TcpClient client) {
             DuplexConnection connection = new DuplexConnection(client);
 
-            Guid            newGuid = Guid.NewGuid();
+            Guid newGuid = Guid.NewGuid();
             InternalSession session = new InternalSession(newGuid, connection);
             if (AddListenerToEstablishedConnections) session.AddListener(OnDataReceived);
-            session.ErrorEncountered         += OnSessionErrorEncountered;
+            session.ErrorEncountered += OnSessionErrorEncountered;
             session.ConnectionClosedRemotely += OnConnectionClosedRemotely;
 
 

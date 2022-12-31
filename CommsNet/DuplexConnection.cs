@@ -34,9 +34,9 @@ namespace CommsNet {
         ///     Initializes a new instance of the <see cref="DuplexConnection" /> class.
         /// </summary>
         public DuplexConnection(TcpClient tcpClient) {
-            _tcpClient                   = tcpClient;
+            _tcpClient = tcpClient;
             _tcpClient.ReceiveBufferSize = int.MaxValue;
-            _tcpClient.SendBufferSize    = int.MaxValue;
+            _tcpClient.SendBufferSize = int.MaxValue;
         }
 
         /// <summary>
@@ -106,10 +106,10 @@ namespace CommsNet {
                 _semaphore.Wait();
                 try {
                     byte[] dataLengthBytes = BitConverter.GetBytes(data.Length); // data.Length is Int32 - assume 4 bytes length
-                    Log?.Invoke($"CN>DC: Sending transmission. Data length: {data.Length};");
+                    Log?.Invoke($"CN>DC: Sending transmission. Data length: {data.Length.ToString()};");
                     _tcpClient.GetStream().Write(dataLengthBytes, 0, dataLengthBytes.Length);
                     _tcpClient.GetStream().Write(data, 0, data.Length);
-                    Log?.Invoke($"CN>DC: Transmission sent.");
+                    Log?.Invoke("CN>DC: Transmission sent.");
                 } finally {
                     _semaphore.Release();
                 }
@@ -129,15 +129,15 @@ namespace CommsNet {
         /// <param name="token">
         ///     Optional cancellation token that can be used to cancel operation before it's completed.
         /// </param>
-        public async Task SendAsync(byte[] data, CancellationToken token = default(CancellationToken)) {
+        public async Task SendAsync(byte[] data, CancellationToken token = default) {
             try {
                 await _semaphore.WaitAsync(token);
                 try {
                     byte[] dataLengthBytes = BitConverter.GetBytes(data.Length); // data.Length is Int32 - assume 4 bytes length
-                    Log?.Invoke($"CN>DC: Sending transmission. Data length: {data.Length};");
+                    Log?.Invoke($"CN>DC: Sending transmission. Data length: {data.Length.ToString()};");
                     await _tcpClient.GetStream().WriteAsync(dataLengthBytes, 0, dataLengthBytes.Length, token);
                     await _tcpClient.GetStream().WriteAsync(data, 0, data.Length, token);
-                    Log?.Invoke($"CN>DC: Transmission sent.");
+                    Log?.Invoke("CN>DC: Transmission sent.");
                 } finally {
                     _semaphore.Release();
                 }
@@ -169,12 +169,16 @@ namespace CommsNet {
             _cancellationTokens?.Cancel();
 
             if (DataReceived != null) {
-                foreach (Delegate @delegate in DataReceived.GetInvocationList()) {
-                    DataReceived -= @delegate as DataReceivedDelegate;
+                foreach (Delegate method in DataReceived.GetInvocationList()) {
+                    DataReceived -= method as DataReceivedDelegate;
                 }
             }
         }
 
+        /// <summary>
+        ///     Invoke all delegates subscribed to <see cref="DataReceived" /> event.
+        /// </summary>
+        /// <param name="data">Received data.</param>
         protected void InvokeDataReceived(byte[] data) {
             if (SynchronizationContext != null) {
                 SynchronizationContext.Post(delegate { DataReceived?.Invoke(data); }, null);
@@ -189,17 +193,17 @@ namespace CommsNet {
         /// <param name="client"> Reference to TcpClient to listen too. </param>
         /// <param name="token">  Cancellation token. </param>
         protected async void TcpBackgroundListener(TcpClient client, CancellationToken token) {
-            byte[]        buffer       = new byte[1000000];
-            NetworkStream stream       = client.GetStream();
-            Stopwatch     timeoutWatch = new Stopwatch();
+            byte[] buffer = new byte[1000000];
+            NetworkStream stream = client.GetStream();
+            Stopwatch timeoutWatch = new Stopwatch();
 
             while (!token.IsCancellationRequested) {
                 try {
-                    byte[] data           = Array.Empty<byte>();
-                    int    bytesReadCount = 0;
+                    byte[] data = Array.Empty<byte>();
+                    int bytesReadCount = 0;
 
                     int dataAlreadyRead = 0;
-                    int dataLength      = 0;
+                    int dataLength = 0;
 
                     timeoutWatch.Reset();
 
@@ -209,13 +213,13 @@ namespace CommsNet {
                             return;
                         }
 
-                        Log?.Invoke($"CN>DC: Data received. New transmission.");
+                        Log?.Invoke("CN>DC: Data received. New transmission.");
 
                         // dataLength == 0 means that this is the beginning of new transmission
                         // first 4 bytes of the array is length of entire transmission - convert it
                         // to int (dataLength) and handle the rest as actual transmission data
                         dataLength = BitConverter.ToInt32(buffer, 0);
-                        Log?.Invoke($"CN>DC: Declared data length: {dataLength};");
+                        Log?.Invoke($"CN>DC: Declared data length: {dataLength.ToString()};");
 
                         Array.Resize(ref data, dataLength);
 
@@ -223,7 +227,7 @@ namespace CommsNet {
 
                         do {
                             if (timeoutWatch.ElapsedMilliseconds > TransmissionReceivedTimeout) {
-                                throw new TimeoutException($"Duplex Connection received declaration of transmission of size {dataLength} but only received {dataAlreadyRead} bytes within {TransmissionReceivedTimeout} milliseconds.");
+                                throw new TimeoutException($"Duplex Connection received declaration of transmission of size {dataLength.ToString()} but only received {dataAlreadyRead.ToString()} bytes within {TransmissionReceivedTimeout.ToString()} milliseconds.");
                             }
 
                             int readCount = stream.Read(buffer, 0, dataLength - dataAlreadyRead < buffer.Length ? dataLength - dataAlreadyRead : buffer.Length);
@@ -232,10 +236,10 @@ namespace CommsNet {
                             }
 
                             dataAlreadyRead += readCount;
-                            Log?.Invoke($"CN>DC: Transmission data received. Read bytes count: {readCount}; Sum of data read: {dataAlreadyRead};");
+                            Log?.Invoke($"CN>DC: Transmission data received. Read bytes count: {readCount.ToString()}; Sum of data read: {dataAlreadyRead};");
                         } while (dataAlreadyRead < dataLength);
 
-                        Log?.Invoke($"CN>DC: Data received reporting to Service Manager. Length: {data.Length};");
+                        Log?.Invoke($"CN>DC: Data received reporting to Service Manager. Length: {data.Length.ToString()};");
 
                         if (data.Length == _command_disconnected.Length && data[0] == _command_disconnected[0]) {
                             Log?.Invoke("CN>DC: Remote disconnection command received.");
@@ -245,7 +249,7 @@ namespace CommsNet {
                         }
 
                         InvokeDataReceived(data);
-                        Log?.Invoke($"CN>DC: Transmission length == data read. Breaking wait loop...");
+                        Log?.Invoke("CN>DC: Transmission length == data read. Breaking wait loop...");
                         break;
                     }
                 } catch (OperationCanceledException) {
