@@ -6,7 +6,7 @@ namespace CommsNet.Structures {
     ///     Supported transmission types.
     /// </summary>
     public enum TransmissionType {
-        Request  = 0,
+        Request = 0,
         Response = 1
     }
 

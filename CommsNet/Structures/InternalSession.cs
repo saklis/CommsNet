@@ -13,10 +13,10 @@ namespace CommsNet.Structures {
         protected Action<Guid, byte[]> _onDataReceived;
 
         public InternalSession(Guid identity, DuplexConnection connection) {
-            Identity   = identity;
+            Identity = identity;
             Connection = connection;
 
-            Connection.ErrorEncountered         += OnErrorEncountered;
+            Connection.ErrorEncountered += OnErrorEncountered;
             Connection.ConnectionClosedRemotely += OnConnectionClosedRemotely;
         }
 

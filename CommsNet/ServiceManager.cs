@@ -332,7 +332,7 @@ namespace CommsNet {
                         for (int i = 0; i < parameters.Length; i++) {
                             if (parameterInfos[i].ParameterType == content[i].GetType()) {
                                 parameters[i] = content[i]; // if type match, just assign parameter's value
-                            } else if (content[i] is object[] values) {// if types don't match and deserialized type is a object[], then it's likely a composite type deserialized into an array
+                            } else if (content[i] is object[] values) { // if types don't match and deserialized type is a object[], then it's likely a composite type deserialized into an array
                                 // try creating instance of type and then assign it's properties using Key attributes
                                 object instance = Activator.CreateInstance(parameterInfos[i].ParameterType);
                                 foreach (PropertyInfo property in instance.GetType().GetProperties()) {
@@ -341,9 +341,11 @@ namespace CommsNet {
                                         property.SetValue(instance, values[(int)keyAttribute.IntKey]);
                                     }
                                 }
+
                                 parameters[i] = instance;
                             }
                         }
+
                         parameters = parameters.Append(transmission).ToArray();
 
                         // InvokeAsync() and InvokeVoidAsync() are an extension methods
@@ -398,15 +400,16 @@ namespace CommsNet {
                         if (method.ReturnType.GenericTypeArguments[0] != content.GetType() && content is object[]) {
                             object[] values = content[0] as object[]; // this extra array nesting is a result of having same mechanism for sending method's arguments (of which there can be meny)
                             object instance = Activator.CreateInstance(method.ReturnType.GenericTypeArguments[0]);
-                                foreach (PropertyInfo property in instance.GetType().GetProperties()) {
-                                    KeyAttribute keyAttribute = property.GetCustomAttribute<KeyAttribute>();
-                                    if (keyAttribute != null) {
-                                        property.SetValue(instance, values[(int)keyAttribute.IntKey]);
-                                    }
+                            foreach (PropertyInfo property in instance.GetType().GetProperties()) {
+                                KeyAttribute keyAttribute = property.GetCustomAttribute<KeyAttribute>();
+                                if (keyAttribute != null) {
+                                    property.SetValue(instance, values[(int)keyAttribute.IntKey]);
                                 }
-                                content[0] = instance;
-                            
+                            }
+
+                            content[0] = instance;
                         }
+
                         _responses.TryAdd(transmission.Identity, (transmission, content));
                         Log?.Invoke($"CN: Transmission added to responses dictionary for processing. OpId: {transmission.Identity.ToString()}; Method: {transmission.MethodName};");
                         break;
