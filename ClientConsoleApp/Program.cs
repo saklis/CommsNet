@@ -33,13 +33,28 @@ namespace ClientConsoleApp
 
             try {
                 // test RemoteCallAsync method
-                WaitForKey("Press any key to test RemoteCall...");
+                WaitForKey("Press any key to test remote calls...");
                 
-                Console.Write("Calling TestRemoteCall... ");
-                int result = await client.TestRemoteCall("foo", "bar", 24);
+                Console.Write("Calling Ping()... ");
+                await client.PingAsync();
                 Console.WriteLine("Success!");
-                Console.WriteLine($"Result of RemoteCall test is: {result}");
                 
+                Console.Write("Calling GetDate()...");
+                DateTime remoteTime = await client.GetDateAsync();
+                Console.WriteLine($"Success! Returned time: {remoteTime.ToString()}");
+                
+                Console.Write("Calling LoginUser()...");
+                Guid? token = await client.LoginUserAsync("userLogin", "userPassword");
+                Console.WriteLine($"Success! User logged in? {(token == Guid.Empty ? "NO!" : $"YES! Token:{token.ToString()}")}");
+                
+                Console.Write("Calling SayHello()...");
+                HelloResponse response = await client.SayHello(new HelloRequest { Greetings = "Hello, friend!", SomeFloat = 42 });
+                Console.WriteLine($"Success! Remote client replied with '{response.Reply}'");
+                
+                Console.Write("Calling Ping() again... ");
+                await client.PingAsync();
+                Console.WriteLine("Success!");
+
                 // close connection
                 WaitForKey("Press any key to close connection...");
                 

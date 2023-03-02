@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -224,7 +225,8 @@ namespace CommsNet {
                                                                                       };
                                       byte[] headerBytes = MessagePackSerializer.Serialize(newTransmission, MessagePackSerializerOptions.Standard.WithAllowAssemblyVersionMismatch(true).WithOmitAssemblyVersion(true));
                                       byte[] headerLenBytes = BitConverter.GetBytes(headerBytes.Length);
-                                      byte[] contentBytes = MessagePackSerializer.Serialize(arguments, MessagePackSerializerOptions.Standard.WithAllowAssemblyVersionMismatch(true).WithOmitAssemblyVersion(true));
+                                      //byte[] contentBytes = MessagePackSerializer.Serialize(arguments, MessagePackSerializerOptions.Standard.WithAllowAssemblyVersionMismatch(true).WithOmitAssemblyVersion(true));
+                                      byte[] contentBytes = MessagePackSerializer.Typeless.Serialize(arguments, MessagePackSerializerOptions.Standard.WithAllowAssemblyVersionMismatch(true).WithOmitAssemblyVersion(true));
 
                                       byte[] message = new byte[headerLenBytes.Length + headerBytes.Length + contentBytes.Length];
                                       Array.Copy(headerLenBytes, message, headerLenBytes.Length);
@@ -253,7 +255,16 @@ namespace CommsNet {
                                                                                         case 0:
                                                                                             throw new ArgumentException($"Response to {methodName} [OpId:{opIdentity.ToString()}] call received, but expected return value is missing.");
                                                                                         case 1:
-                                                                                            return (RType)response.Content[0];
+                                                                                            if (response.Content[0].GetType() == typeof(RType)) {
+                                                                                                return (RType)response.Content[0];
+                                                                                            }
+
+                                                                                            try {
+                                                                                                return (RType)TypeDescriptor.GetConverter(typeof(RType)).ConvertFromInvariantString((string)response.Content[0]);
+                                                                                            } catch (InvalidCastException e) {
+                                                                                                throw new NotSupportedException($"Type '{typeof(RType)}' is not supported. Please file issue on project's GitHub to add support to that type.", e);
+                                                                                            }
+
                                                                                         default:
                                                                                             throw new ArgumentException($"Response to {methodName} [OpId:{opIdentity.ToString()}] returned incorrect number of values. Result count: {response.Content.Length.ToString()}");
                                                                                     }
@@ -315,7 +326,25 @@ namespace CommsNet {
 
                 switch (transmission.Type) {
                     case (int)TransmissionType.Request:
-                        object[] parameters = content.Append(transmission).ToArray();
+                        // match declare parameter types with type deserialized by MSP
+                        ParameterInfo[] parameterInfos = method.GetParameters();
+                        object[] parameters = new object[parameterInfos.Length - 1]; // last one is an Transmission object. Skip it
+                        for (int i = 0; i < parameters.Length; i++) {
+                            if (parameterInfos[i].ParameterType == content[i].GetType()) {
+                                parameters[i] = content[i]; // if type match, just assign parameter's value
+                            } else if (content[i] is object[] values) {// if types don't match and deserialized type is a object[], then it's likely a composite type deserialized into an array
+                                // try creating instance of type and then assign it's properties using Key attributes
+                                object instance = Activator.CreateInstance(parameterInfos[i].ParameterType);
+                                foreach (PropertyInfo property in instance.GetType().GetProperties()) {
+                                    KeyAttribute keyAttribute = property.GetCustomAttribute<KeyAttribute>();
+                                    if (keyAttribute != null) {
+                                        property.SetValue(instance, values[(int)keyAttribute.IntKey]);
+                                    }
+                                }
+                                parameters[i] = instance;
+                            }
+                        }
+                        parameters = parameters.Append(transmission).ToArray();
 
                         // InvokeAsync() and InvokeVoidAsync() are an extension methods
                         // defined in Structures.Extensions
@@ -364,6 +393,20 @@ namespace CommsNet {
 
                         break;
                     case (int)TransmissionType.Response:
+                        // if declare return type and deserialized data don't match, and deserialized data is an object[],
+                        // then it's likely a composite type deserialized into an array.
+                        if (method.ReturnType.GenericTypeArguments[0] != content.GetType() && content is object[]) {
+                            object[] values = content[0] as object[]; // this extra array nesting is a result of having same mechanism for sending method's arguments (of which there can be meny)
+                            object instance = Activator.CreateInstance(method.ReturnType.GenericTypeArguments[0]);
+                                foreach (PropertyInfo property in instance.GetType().GetProperties()) {
+                                    KeyAttribute keyAttribute = property.GetCustomAttribute<KeyAttribute>();
+                                    if (keyAttribute != null) {
+                                        property.SetValue(instance, values[(int)keyAttribute.IntKey]);
+                                    }
+                                }
+                                content[0] = instance;
+                            
+                        }
                         _responses.TryAdd(transmission.Identity, (transmission, content));
                         Log?.Invoke($"CN: Transmission added to responses dictionary for processing. OpId: {transmission.Identity.ToString()}; Method: {transmission.MethodName};");
                         break;

@@ -94,7 +94,7 @@ namespace CommsNet {
         public void Disconnect() {
             Send(_command_disconnected);
             StopListening();
-            _tcpClient.Close();
+            if (_tcpClient.Connected) _tcpClient.Close();
         }
 
         /// <summary>

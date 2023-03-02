@@ -1,21 +1,41 @@
-﻿using CommsNet;
+﻿using System;
+using System.Threading.Tasks;
+using CommsNet;
 using CommsNet.Structures;
 using SharedLibrary;
-using System;
-using System.Threading.Tasks;
 using SharedLibrary.DataContainers;
 
-namespace ServerConsoleApp
-{
-    public class ServiceServer : ServiceManager, IServiceInterface
-    {
-        public async Task<int> TestRemoteCall(string title, string desc, int count, Transmission transmission = null) {
-            Console.WriteLine($"Client {transmission.SessionIdentity} called TestRemoteCall with arguments:");
-            Console.WriteLine($"\ttitle: {title} (Type: {title.GetType()})");
-            Console.WriteLine($"\tdesc: {desc} (Type: {title.GetType()})");
-            Console.WriteLine($"\tcount: {count} (Type: {title.GetType()})");
+namespace ServerConsoleApp {
+    public class ServiceServer : ServiceManager, IServiceInterface {
+        public async Task<DateTime> GetDateAsync(Transmission transmission = null) {
+            DateTime retVal = DateTime.Now;
 
-            return 42;
+            Console.WriteLine($"Client {transmission.SessionIdentity.ToString()} called GetDate(). Returned value: {retVal.ToString()}");
+            return retVal;
+        }
+
+        public async Task PingAsync(Transmission transmission = null) {
+            Console.WriteLine($"Client {transmission.SessionIdentity.ToString()} pinged!");
+        }
+
+        public async Task<Guid> LoginUserAsync(string login, string password, Transmission transmission = null) {
+            // randomly do a login
+            if (new Random().Next(0, 2) == 1) {
+                Guid newGuid = Guid.NewGuid();
+                Console.WriteLine($"Client {transmission.SessionIdentity.ToString()} called LoginUser(). Login success! Returned: {newGuid.ToString()}");
+                return newGuid;
+            }
+
+            Console.WriteLine($"Client {transmission.SessionIdentity.ToString()} called LoginUser(). Login failed! Returned: null");
+            return Guid.Empty;
+        }
+
+        public async Task<HelloResponse> SayHello(HelloRequest message, Transmission transmission = null) {
+            Console.WriteLine($"Client {transmission.SessionIdentity.ToString()} called SayHello.");
+            Console.WriteLine($"Message: {message.Greetings}. Float sent: {message.SomeFloat.ToString()}");
+            return new HelloResponse {
+                                         Reply = $"Hey! Very nice {message.SomeFloat.ToString()} float!"
+                                     };
         }
     }
 }
