@@ -10,15 +10,17 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <AssemblyVersion>1.0.0</AssemblyVersion>
-        <FileVersion>1.0.0</FileVersion>
-        <Version>1.0.0</Version>
+        <AssemblyVersion>2.0.0</AssemblyVersion>
+        <FileVersion>2.0.0</FileVersion>
+        <Version>2.0.0</Version>
         <RepositoryUrl>https://github.com/saklis/CommsNet</RepositoryUrl>
         <PackageProjectUrl>https://github.com/saklis/CommsNet</PackageProjectUrl>
         <Authors>Sebastian Kliś</Authors>
         <Company>saklis</Company>
         <Description>Network abstraction layer with session functionality and remote execution support.</Description>
-        <PackageReleaseNotes>1.0.0:
+        <PackageReleaseNotes>2.0.0:
+            - Extended release with "1 parameter per call" limit removed
+1.0.0:
             - Initial release
         </PackageReleaseNotes>
         <PackageIcon>networking.png</PackageIcon>
@@ -30,7 +32,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Remove="Resources\networking.png"/>
+        <None Remove="Resources\networking.png" />
     </ItemGroup>
 
     <ItemGroup>
@@ -41,15 +43,15 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="MessagePack" Version="2.2.85"/>
-        <PackageReference Include="MessagePack.Annotations" Version="2.2.85"/>
-        <PackageReference Include="MessagePackAnalyzer" Version="2.2.85"/>
-        <PackageReference Include="Microsoft.CSharp" Version="4.7.0"/>
-        <PackageReference Include="System.Buffers" Version="4.5.1"/>
-        <PackageReference Include="System.Collections.Immutable" Version="5.0.0"/>
-        <PackageReference Include="System.Memory" Version="4.5.4"/>
-        <PackageReference Include="System.Numerics.Vectors" Version="4.5.0"/>
-        <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="5.0.0"/>
+        <PackageReference Include="MessagePack" Version="2.2.85" />
+        <PackageReference Include="MessagePack.Annotations" Version="2.2.85" />
+        <PackageReference Include="MessagePackAnalyzer" Version="2.2.85" />
+        <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+        <PackageReference Include="System.Buffers" Version="4.5.1" />
+        <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
+        <PackageReference Include="System.Memory" Version="4.5.4" />
+        <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+        <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="5.0.0" />
     </ItemGroup>
 
     <ItemGroup>
