@@ -40,7 +40,7 @@ Net Standard 2.0 communication framework. WCF replacement. Uses MessagePack for 
 
 ## 1. Overview
 
-This document describes architecture and functionality of CommsNet, a Network abstraction library. CommsNet provides a set of functionality to make it a replacement for Windows Communication Foundation, which was deprecated in Net5.0. 
+CommsNet is a network abstraction library. It provides a set of functionality to make it a translation layer or a replacement for Windows Communication Foundation. 
 
 CommsNet provides following functions:
 - Duplex connections – all connections made between two machines are always two-way to allow sending and receiving data.
@@ -142,6 +142,14 @@ public void StopListening()
 ```
 
 Calling StopListening removes all event handlers from DataReceived event.
+
+Underlying connection can be closed using Disconnect method.
+```cs
+/// <summary>
+///     Close connection.
+/// </summary>
+public void Disconnect()
+```
 
 #### IV. Error handling
 
@@ -400,9 +408,9 @@ The main purpose of interface is to provide methods  that can be remotely execut
 
 Requirement for method declaration are following:
 - Must return Task or Task<>.
-- Must have 1 or 2 parameters:
-1. First parameter is a parameter used for transferring data. This parameter can be omitted if method don’t require any data to be transferred.
-2. Second parameter must be CommsNet.Structures.Transmission transmission = null.
+- Must have 1 or more parameters:
+1. One or more parameters that are data passed to the remotelly called procedure. Those parameters can be omited completly, if no data is required.
+2. Last (or only) parameter must be CommsNet.Structures.Transmission transmission = null.
 
 For example, correct declaration can look like this:
 ```cs
@@ -412,53 +420,48 @@ For example, correct declaration can look like this:
 Task<bool> IsOfAge(int age, Transmission transmission = null);
 ```
 
-There are 4 specific patterns that are supported by ServiceManager:
-1. Method with return value and a parameter.
-2. Method with return value but without parameter.
-3. Method without return value but with parameter.
-4. Method without return value and without parameter.
-
-Those 4 patterns represents 4 overrides of ExecuteRemoteAsync method that is used to call method defined on the other side of the connection.
-
-Example of implementation of those for patterns inside the shared interface are as follow:
+Example of implementation of different methods inside the shared interface are as follow:
 
 ```cs
-public interface IServiceInterface
-{
+public interface IServiceInterface {
     /// <summary>
-    ///     Example of method with return value (DateTime) and without parameter.
+    ///     Example of method with return type (DateeTime) and without any parameters
     /// </summary>
-    Task<DateTime> GetDate(Transmission transmission = null);
+    /// <param name="transmission">Required parameter to give access to transmission properties on the receiving end</param>
+    /// <returns>Value returned by remote client.</returns>
+    Task<DateTime> GetDateAsync(Transmission transmission = null);
 
     /// <summary>
-    ///     Example of method without return value and without parameter.
+    ///     Example of method without return type and without any parameters.
     /// </summary>
-    Task Ping(Transmission transmission = null);
+    /// <param name="transmission">Required parameter to give access to transmission properties on the receiving end</param>
+    Task PingAsync(Transmission transmission = null);
 
     /// <summary>
-    ///     Example of method with return value (HelloResponse) and with parameter (HelloRequest).
+    ///     Example of method with return type (Guid) and two parameters (string, string).
     /// </summary>
+    /// <param name="login">First parameter.</param>
+    /// <param name="password">Second parameter.</param>
+    /// <param name="transmission">Required parameter to give access to transmission properties on the receiving end</param>
+    /// <returns>Guid returned by the remote client. Guid.Empty when login failed.</returns>
+    Task<Guid> LoginUserAsync(string login, string password, Transmission transmission = null);
+
+    /// <summary>
+    ///     Example of method with custom return type (HelloResponse) and custom argument (HelloRequest).
+    /// </summary>
+    /// <param name="message">First parameter.</param>
+    /// <param name="transmission">Required parameter to give access to transmission properties on the receiving end</param>
+    /// <returns>Object created by the remote client.</returns>
     Task<HelloResponse> SayHello(HelloRequest message, Transmission transmission = null);
-
-    /// <summary>
-    ///     Example of method without return value and with parameter (int).
-    /// </summary>
-    Task SendAge(int age, Transmission transmission = null);
-
-    /// <summary>
-    ///     Example of method with parameter and with return value using simple types.
-    /// </summary>
-
-    Task<bool> IsOfAge(int age, Transmission transmission = null);
 }
 
 ```
 
-Role of this interface is to ensure that ServiceManager instance (no mater if it's on a server or on a client) can perform all actions in its own context. Keep in mind that **all** methods in this interface can be called remotely and while in practice some are designed for server and some are for clients, ServiceManager does not enforce such separation.
+Role of this interface is to ensure that ServiceManager instance (no mater if it's on a server or on a client) can perform all actions in its own context. Keep in mind that **all** methods in this interface can be called remotely and while in practice some are designed for server and some are for clients, ServiceManager does not enforce such separation. Connection can be used both way, at any point, and it's up to you to ensure your implemtation matches purpose of particular method.
 
 ### C. Data containers
 
-As can be seen in interface example, specifically in SayHello() method, composite types may be used to encapsulate transmitted data. However, composite types need to be serialized. CommsNet is using MessagePack library for serialization and de-serialization.
+As can be seen in interface example, specifically in SayHello() method, composite types may be used to encapsulate transmited data. However, composite types need to be serialized. CommsNet is using MessagePack library for serialization and de-serialization.
 
 This document only provides basic requirements that composite type needs to meet to be usable with MessagePack serialization. To learn more about MessagePack you can visit project’s homepage: [https://github.com/neuecc/MessagePack-CSharp](https://github.com/neuecc/MessagePack-CSharp)
 
@@ -507,72 +510,58 @@ namespace ServerConsoleApp
 
 For ServiceManager nothing else need to be done, but since implementing an interface require to provide method definitions, the final class implementation can look like this:
 ```cs
-public class ServiceServer : ServiceManager, IServiceInterface
-{
-    /// <summary>
-    ///     Example of method with return value (DateTime) and without parameter.
-    /// </summary>
-    public async Task<DateTime> GetDate(Transmission transmission = null)
-    {
-        Console.WriteLine($"Client {transmission.SessionIdentity} called GetDate.");
-        return DateTime.Now;
+public class ServiceServer : ServiceManager, IServiceInterface {
+    public async Task<DateTime> GetDateAsync(Transmission transmission = null) {
+        DateTime retVal = DateTime.Now;
+
+        Console.WriteLine($"Client {transmission.SessionIdentity.ToString()} called GetDate(). Returned value: {retVal.ToString()}");
+        return retVal;
     }
 
-    /// <summary>
-    ///     Example of method without return value and without parameter.
-    /// </summary>
-    public async Task Ping(Transmission transmission = null)
-    {
-        Console.WriteLine($"Client {transmission.SessionIdentity} pinged!");
+    public async Task PingAsync(Transmission transmission = null) {
+        Console.WriteLine($"Client {transmission.SessionIdentity.ToString()} pinged!");
     }
 
-    /// <summary>
-    ///     Example of method with return value (HelloResponse) and with parameter (HelloRequest).
-    /// </summary>
-    public async Task<HelloResponse> SayHello(HelloRequest message, Transmission transmission = null)
-    {
-        Console.WriteLine($"Client {transmission.SessionIdentity} called SayHello.");
-        Console.WriteLine($"Message: {message.Greetings}. Float sent: {message.SomeFloat}");
-        return new HelloResponse()
-        {
-            Reply = $"Hey! Very nice {message.SomeFloat} float!"
-        };
+    public async Task<Guid> LoginUserAsync(string login, string password, Transmission transmission = null) {
+        // randomly do a login
+        if (new Random().Next(0, 2) == 1) {
+            Guid newGuid = Guid.NewGuid();
+            Console.WriteLine($"Client {transmission.SessionIdentity.ToString()} called LoginUser(). Login success! Returned: {newGuid.ToString()}");
+            return newGuid;
+        }
+
+        Console.WriteLine($"Client {transmission.SessionIdentity.ToString()} called LoginUser(). Login failed! Returned: null");
+        return Guid.Empty;
     }
 
-    /// <summary>
-    ///     Example of method without return value and with parameter (int).
-    /// </summary>
-    public async Task SendAge(int age, Transmission transmission = null)
-    {
-        Console.WriteLine($"Client {transmission.SessionIdentity} called SendAge.");
-        Console.WriteLine($"Client's age is {age}.");
-    }
-
-    /// <summary>
-    ///     Example of method with parameter and with return value using simple types.
-    /// </summary>
-    public async Task<bool> IsOfAge(int age, Transmission transmission = null)
-    {
-        return age >= 18;
+    public async Task<HelloResponse> SayHello(HelloRequest message, Transmission transmission = null) {
+        Console.WriteLine($"Client {transmission.SessionIdentity.ToString()} called SayHello.");
+        Console.WriteLine($"Message: {message.Greetings}. Float sent: {message.SomeFloat.ToString()}");
+        return new HelloResponse {
+                                    Reply = $"Hey! Very nice {message.SomeFloat.ToString()} float!"
+                                };
     }
 }
 ```
 
-By creating a class that extends bot ServiceManager and the shared interface provides one very important functionality - it de facto adds methods we want to be able to call into ServiceManager's scope. Thanks to this our instance not only has entire ServiceManager functionality, but also is aware of all remotely callable methods.
+Creating a class that extends both ServiceManager and the shared interface provides one very important functionality - it de facto adds methods we want to be able to call into ServiceManager's scope. Thanks to this our instance not only has entire ServiceManager functionality, but also is aware of all remotely callable methods.
 
 Starting CommsNet server itself is actually quite simple.  Instance of the class can be created using new operator and server can be started with StartServer() method.
 ```cs
 Console.Write("Starting server...");
-ServiceServer server = new ServiceServer();
-server.NewConnectionEstablished += (identity, connection) => Console.WriteLine($"New connection accepted! Identity: {identity}");
-server.SessionEncounteredError += (identity, exception) =>
-{
-    Console.WriteLine();
-    Console.WriteLine($"Exception in CommsNet encountered! Session: {identity}");
-    Console.WriteLine(exception);
-};
+ServiceServer server = new();
+server.NewConnectionEstablished += (identity, connection) => Console.WriteLine($"New connection accepted! Identity: {identity.ToString()}");
+server.SessionEncounteredError += (identity, exception) => {
+                                        Console.WriteLine();
+                                        Console.WriteLine($"Exception in CommsNet encountered! Session: {identity.ToString()}");
+                                        Console.WriteLine(exception);
+                                    };
+server.ConnectionClosedRemotely += identity => {
+                                        Console.WriteLine();
+                                        Console.WriteLine($"Client {identity.ToString()} closed connection from its side.");
+                                    };
 server.StartServer(12345);
-Console.WriteLine("Success! Waiting for connections...");
+Console.WriteLine("Success!");
 ```
 
 ### E. Client-side instance and remote execution
@@ -594,67 +583,48 @@ namespace ClientConsoleApp
 }
 ```
 
-The difference is that on the client you don't need to implement actual logic and instead interface's implementation can be used to actually call the method implemented on the server. This can be implemented using ExecuteRemoteAsync() method.
+The difference is that on the client you don't need to implement actual logic and instead interface's implementation can be used to actually call the method implemented on the server. This can be implemented using RemoteCallAsync() method.
 
-ExecuteRemoteAsync is a generic method that takes two type arguments. First is a return type, second is a type of parameter holding data to be transmitted. Last parameter, transmission, is not used in ExecuteRemoteAsync, but it’s required later on by server implementation, so it needs to be included in declaration.
-
-There are 4 overrides of ExecuteRemoteAsync method and which one to use depends on whether method needs a parameter for transmitted data or not, or if it does or doesn’t return any value.
+RemoteCallAsync is a generic method that takes one type argument, which is a return type. In case when method don't return any value, an override without that generic attribute is provided, too.
+Last parameter of the method, transmission, is not used in RemoteCallAsync, but it’s required later on by server implementation, so it needs to be included in declaration.
 
 Available overrides can be used as follow:
 ```cs
 public class ServiceClient : ServiceManager, IServiceInterface
 {
-    /// <summary>
-    ///     Example of method with return value (DateTime) and without parameter.
-    /// </summary>
-    public async Task<DateTime> GetDate(Transmission transmission = null)
-    {
-        return await ExecuteRemoteAsync<DateTime>(default, nameof(GetDate));
+    public async Task<DateTime> GetDateAsync(Transmission transmission = null) {
+        return await RemoteCallAsync<DateTime>(default, nameof(GetDateAsync));
     }
 
-    /// <summary>
-    ///     Example of method without return value and without parameter.
-    /// </summary>
-    public async Task Ping(Transmission transmission = null)
-    {
-        await ExecuteRemoteAsync(default, nameof(Ping));
+    public async Task PingAsync(Transmission transmission = null) {
+        await RemoteCallAsync(default, nameof(PingAsync));
     }
 
-    /// <summary>
-    ///     Example of method with return value (HelloResponse) and with parameter (HelloRequest).
-    /// </summary>
-    public async Task<HelloResponse> SayHello(HelloRequest message, Transmission transmission = null)
-    {
-        return await ExecuteRemoteAsync<HelloResponse, HelloRequest>(default, nameof(SayHello), message);
+    public async Task<Guid> LoginUserAsync(string login, string password, Transmission transmission = null) {
+        return await RemoteCallAsync<Guid>(default, nameof(LoginUserAsync), login, password);
     }
 
-    /// <summary>
-    ///     Example of method without return value and with parameter (int).
-    /// </summary>
-    public async Task SendAge(int age, Transmission transmission = null)
-    {
-        await ExecuteRemoteAsync<int>(default, nameof(SendAge), age);
-    }
-
-    /// <summary>
-    ///     Example of method with parameter and with return value using simple types.
-    /// </summary>
-    public async Task<bool> IsOfAge(int age, Transmission transmission = null)
-    {
-        return await ExecuteRemoteAsync<bool, int>(default, nameof(IsOfAge), age);
+    public async Task<HelloResponse> SayHello(HelloRequest message, Transmission transmission = null) {
+        return await RemoteCallAsync<HelloResponse>(default, nameof(SayHello), message);
     }
 }
 ```
 
 Using ServiceClient is also somewhat similiar to server version. First create instance using new operator and then connect to running server with Connect() method.
 ```cs
-ServiceClient client = new ServiceClient();
-client.SessionEncounteredError += (identity, exception) =>
-{
-    Console.WriteLine();
-    Console.WriteLine("Exception in CommsNet encountered!");
-    Console.WriteLine(exception);
-};
+Console.Write("Connecting to server... ");
+
+ServiceClient client = new();
+client.SessionEncounteredError += (identity, exception) => {
+                                        Console.WriteLine();
+                                        Console.WriteLine("Exception in CommsNet encountered!");
+                                        Console.WriteLine(exception);
+                                    };
+client.ConnectionClosedRemotely += identity => {
+                                        Console.WriteLine();
+                                        Console.WriteLine("Server closed connection.");
+                                    };
+
 client.ConnectToServer("localhost", 12345, 12346);
 
 Console.WriteLine("Connected!");
@@ -662,15 +632,9 @@ Console.WriteLine("Connected!");
 
 With instance initialized, you can just call the methods as if they were implemented locally.
 ```cs
-HelloRequest request = new HelloRequest()
-{
-    Greetings = "Hello from the client!",
-    SomeFloat = 42.42f
-};
-
-Console.Write("Calling SayHello...");
-HelloResponse response = await client.SayHello(request);
-Console.WriteLine($"Success! Response: {response.Reply}");
+Console.Write("Calling SayHello()...");
+HelloResponse response = await client.SayHello(new HelloRequest { Greetings = "Hello, friend!", SomeFloat = 42 });
+Console.WriteLine($"Success! Remote client replied with '{response.Reply}'");
 ```
 
 ### F. Interface-less implementation
@@ -683,7 +647,7 @@ public class ServiceClient : ServiceManager
 {
     public async bool CallMethod(int number, Transmission transmission = null)
     {
-        bool result = await ExecuteRemoteAsync<DateTime, int>(default, "ServerMethod", number);
+        bool result = await RemoteCallAsync<bool>(default, "ServerMethod", number);
         return result;
     }
 }
@@ -701,11 +665,11 @@ public class ServiceServer : ServiceManager
 }
 ```
 
-Something worth pointing out at this point is also naming convention. ServiceManager does not differentiate between server and client but instead between caller and executor. ServiceManager server can handle multiple clients and keeps track of sessions, but beside that any client can execute method on the server and likewise server can execute any method on the client. This is especially important when considering callbacks.
+Something worth pointing out is also naming convention. ServiceManager does not differentiate between server and client but instead between caller and executor. ServiceManager server can handle multiple clients and keeps track of sessions, but beside that any client can execute method on the server and likewise server can execute any method on the client. This is especially important when considering callbacks.
 
 ### G. Callbacks
 
-WCF offers function to make callbacks – remote execution from server to clients. This is also available in CommsNet library, but since default DuplexConnection is by definition two-way, there’s no strict difference between communication’s direction. Server can execute methods remotely using exactly same API as clients. The only difference is that server needs to provide session identity as an additional parameter to address specific client.
+WCF offers function to make callbacks – remote execution from server to clients. This is also available in CommsNet library, but since default DuplexConnection is by definition two-way, there’s no strict difference between direction of communication. Server can execute methods remotely using exactly same API as clients. The only difference is that server needs to provide session identity as an additional parameter to address specific client.
 
 ## 5. Attributions
 Library icon by <a href="https://www.flaticon.com/free-icons/teamwork" title="teamwork icons">Teamwork icons created by Becris - Flaticon</a>
